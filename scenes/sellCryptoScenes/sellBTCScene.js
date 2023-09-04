@@ -10,8 +10,6 @@ async function getNbuUsdtToUah() {
 		const data = await response.json();
 		const nbuUsdtToUah = data.find(item => item.ccy === 'USD' && item.base_ccy === 'UAH' && item.sale);
 
-		console.log('nbuUsdtToUah: ', nbuUsdtToUah);
-
 		return nbuUsdtToUah.sale;
 	} catch (e) {
 		console.log(e);
