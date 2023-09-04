@@ -28,26 +28,31 @@ marketScene.action('sell', async (ctx) => {
 
 marketScene.action('buy_btc', async (ctx) => {
 	await ctx.answerCbQuery()
+	await ctx.deleteMessage();
 	await ctx.scene.enter('buyCryptoBTCTypeScene')
 })
 
 marketScene.action('buy_ltc', async (ctx) => {
 	await ctx.answerCbQuery()
+	await ctx.deleteMessage();
  await ctx.scene.enter('buyCryptoLTCTypeScene')
 })
 
 marketScene.action('buy_eth', async (ctx) => {
 	await ctx.answerCbQuery()
+	await ctx.deleteMessage();
 	await ctx.scene.enter('buyCryptoETHTypeScene')
 })
 
 marketScene.action('buy_xrp', async (ctx) => {
 	await ctx.answerCbQuery()
+	await ctx.deleteMessage();
 	await ctx.scene.enter('buyCryptoXRPTypeScene')
 })
 
 marketScene.action('buy_usdt', async (ctx) => {
 	await ctx.answerCbQuery()
+	await ctx.deleteMessage();
 	await ctx.scene.enter('buyCryptoUSDTTypeScene')
 })
 
@@ -55,26 +60,31 @@ marketScene.action('buy_usdt', async (ctx) => {
 
 marketScene.action('sell_btc', async (ctx) => {
 	await ctx.answerCbQuery()
+	await ctx.deleteMessage();
 	await ctx.scene.enter('sellCryptoBTCTypeScene')
 })
 
 marketScene.action('sell_ltc', async (ctx) => {
 	await ctx.answerCbQuery()
+	await ctx.deleteMessage();
 	await ctx.scene.enter('sellCryptoLTCTypeScene')
 })
 
 marketScene.action('sell_eth', async (ctx) => {
 	await ctx.answerCbQuery()
+	await ctx.deleteMessage();
 	await ctx.scene.enter('sellCryptoETHTypeScene')
 })
 
 marketScene.action('sell_xrp', async (ctx) => {
 	await ctx.answerCbQuery()
+	await ctx.deleteMessage();
 	await ctx.scene.enter('sellCryptoXRPTypeScene')
 })
 
 marketScene.action('sell_usdt', async (ctx) => {
 	await ctx.answerCbQuery()
+	await ctx.deleteMessage();
 	await ctx.scene.enter('sellCryptoUSDTTypeScene')
 })
 

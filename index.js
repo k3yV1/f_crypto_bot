@@ -52,6 +52,7 @@ try {
 }
 
 bot.command("start", async (ctx) => {
+	console.log('chat_id: ', ctx.from.id)
 	const [user, created ] = await UserModel.findOrCreate({
 		where: { chat_id: ctx.from.id },
 		defaults: {

@@ -1,5 +1,23 @@
 const { Scenes, Markup } = require('telegraf');
-const fetch = require('node-fetch')
+const fetch = require('node-fetch');
+
+async function getNbuUsdtToUah() {
+	try {
+		const response= await fetch('https://api.privatbank.ua/p24api/pubinfo?exchange&coursid=5', {
+			method: 'GET'
+		});
+
+		const data = await response.json();
+		const nbuUsdtToUah = data.find(item => item.ccy === 'USD' && item.base_ccy === 'UAH' && item.buy);
+
+		console.log('nbuUsdtToUah: ', nbuUsdtToUah)
+
+		return nbuUsdtToUah;
+	} catch (e) {
+		console.log(e);
+		return null;
+	}
+}
 
 const buyCryptoBTCScene = new Scenes.WizardScene(
 	'buyCryptoBTCTypeScene', // Уникальный идентификатор сцены
@@ -8,14 +26,24 @@ const buyCryptoBTCScene = new Scenes.WizardScene(
 		return ctx.wizard.next(); // Переход к следующему обработчику
 	},
 	(ctx) => {
-		const cryptoAmount = parseFloat(ctx.message.text);
+		const input = ctx.message.text.trim();
+
+		// Проверка с помощью регулярного выражения на число с точкой или запятой
+		if (!/^\d+(\.|,)?\d*$/.test(input)) {
+			ctx.reply('Введите корректное количество');
+			return;
+		}
+
+		// Замена запятой на точку, чтобы получить корректное число
+		const cryptoAmount = parseFloat(input.replace(',', '.'));
+
 		if (isNaN(cryptoAmount) || cryptoAmount <= 0) {
 			ctx.reply('Введите корректное количество');
 			return;
 		}
 
 		ctx.wizard.state.cryptoAmount = cryptoAmount; // Сохраняем количество в состоянии
-		ctx.answerCbQuery()
+
 		ctx.reply('Выберите валюту:', Markup.inlineKeyboard([
 			Markup.button.callback('USD', 'usd'),
 			Markup.button.callback('UAH', 'uah'),
@@ -25,6 +53,7 @@ const buyCryptoBTCScene = new Scenes.WizardScene(
 	},
 	async (ctx) => {
 		if (ctx.callbackQuery.data === 'usd') {
+			ctx.deleteMessage();
 			ctx.wizard.state.currency = ctx.callbackQuery.data; // Сохраняем выбранную валюту в состоянии
 			let btcPrice = 0
 			try {
@@ -47,8 +76,6 @@ const buyCryptoBTCScene = new Scenes.WizardScene(
 
 			const price = (cryptoAmount * btcPrice)
 
-			console.log('price: ', price)
-
 			// Здесь можно выполнить дополнительные действия с полученными данными
 
 			await ctx.replyWithMarkdown(`
@@ -56,19 +83,19 @@ const buyCryptoBTCScene = new Scenes.WizardScene(
 
 👤 <b>Пользователь</b>: @${ctx.from.username}
 💳 <b>Покупка</b>: BTC
-💰 <b>Цеза за ${cryptoAmount} BTC</b>: ${price} USD
+💰 <b>Цена за ${cryptoAmount} BTC</b>: ${price} USD
 💱 <b>Валюта</b>: ${currency.toUpperCase()}`, { parse_mode: 'HTML'});
 
 			await ctx.reply('В течение дня Ваша заявка будет рассмотрена и человек свяжется с Вами по вопросу продажи');
-			await ctx.telegram.sendMessage(378520189,`
+			await ctx.telegram.sendMessage(401941163,`
 📩 <b>Заявка</b>			
 			
 👤 <b>Пользователь</b>: @${ctx.from.username}
-💱 <b>Тип криптовалюты</b>: ИTC
+💱 <b>Тип криптовалюты</b>: BTC
 💰 <b>Кол-во криптовалюты которую хочет купить</b>: ${cryptoAmount}
 💳 <b>Стоимость</b>: ${price} ${currency.toUpperCase()}
 🗒 <b>Тип заяки</b>: Покупка
-`)
+`, { parse_mode: 'HTML' })
 
 			// return ctx.wizard.next()
 			return ctx.scene.leave();
@@ -76,7 +103,6 @@ const buyCryptoBTCScene = new Scenes.WizardScene(
 
 		if(ctx.callbackQuery.data === 'uah') {
 			ctx.wizard.state.currency = ctx.callbackQuery.data; // Сохраняем выбранную валюту в состоянии
-			let btcPrice = 0
 			try {
 				const response = await fetch('https://api.binance.com/api/v3/ticker/price', {
 					method: 'GET',
@@ -86,32 +112,24 @@ const buyCryptoBTCScene = new Scenes.WizardScene(
 				})
 
 				const data = await response.json()
-				btcPrice = parseFloat(data.find(item => item.symbol === 'BTCUAH').price).toFixed(2);
-				console.log('btc: ', btcPrice)
-			} catch (e) {
-				console.log(e)
-			}
+				const btcPrice = parseFloat(data.find(item => item.symbol === 'BTCUSDT').price).toFixed(2);
+				const usdtToUah = await getNbuUsdtToUah()
 
-			const cryptoAmount = ctx.wizard.state.cryptoAmount;
-			const currency = ctx.wizard.state.currency;
+				const cryptoAmount = ctx.wizard.state.cryptoAmount;
+				const currency = ctx.wizard.state.currency;
+				const price = (cryptoAmount * btcPrice) * usdtToUah
 
-			const price = (cryptoAmount * btcPrice)
-
-			console.log('price: ', price)
-
-			// Здесь можно выполнить дополнительные действия с полученными данными
-
-
-			await ctx.replyWithMarkdown(`
+				// Здесь можно выполнить дополнительные действия с полученными данными
+				await ctx.replyWithMarkdown(`
 ⚠️ <b>ПРОЧИТАЙТЕ ВНИМАТЕЛЬНО</b>
 
 👤 <b>Пользователь</b>: @${ctx.from.username}
 💳 <b>Покупка</b>: BTC
-💰 <b>Цеза за ${cryptoAmount} BTC</b>: ${price} UAH
+💰 <b>Цена за ${cryptoAmount} BTC</b>: ${price} UAH
 💱 <b>Валюта</b>: ${currency.toUpperCase()}`, { parse_mode: 'HTML'});
 
-			await ctx.reply('В течение дня Ваша заявка будет рассмотрена и человек свяжется с Вами по вопросу продажи');
-			await ctx.telegram.sendMessage(378520189,`
+				await ctx.reply('В течение дня Ваша заявка будет рассмотрена и человек свяжется с Вами по вопросу продажи');
+				await ctx.telegram.sendMessage(401941163,`
 📩 <b>Заявка</b>			
 			
 👤 <b>Пользователь</b>: @${ctx.from.username}
@@ -119,8 +137,12 @@ const buyCryptoBTCScene = new Scenes.WizardScene(
 💰 <b>Кол-во криптовалюты которую хочет купить</b>: ${cryptoAmount}
 💳 <b>Стоимость</b>: ${price} ${currency.toUpperCase()}
 🗒 <b>Тип заяки</b>: Покупка
-`)
-			return ctx.scene.leave();
+`, { parse_mode: 'HTML' })
+				return ctx.scene.leave();
+
+			} catch (e) {
+				console.log(e)
+			}
 		}
 	}
 );
